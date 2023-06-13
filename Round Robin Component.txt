@@ -1,0 +1,14 @@
+After Submission
+	Check Team Time, if created on between Hours of Operation,
+		Check the List of users and sort alphabetically. 
+		Check next User on Team Record
+			If Next User unavailable in list retrieved, get list of users, sort, and find next user after current user and set last user to next 			user and next user to the following user. 
+			If user at the end of the list, set next user to first User of list. 
+			If Last User Assigned is Blank, set first user on list. 
+	Wait until After Open Date Time
+		Check the List of users and sort alphabetically. 
+		Check next User on Team Record
+			If Next User unavailable in list retrieved, get list of users, sort, and find next user after current user and set last user to next 			user and next user to the following user. 
+			If user at the end of the list, set next user to first User of list. 
+			If Last User Assigned is Blank, set first user on list.
+		
