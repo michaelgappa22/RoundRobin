@@ -1,0 +1,4 @@
+Create Workflow that waits until total team members are logged in and time is passed threshold.
+	Once true, retrieve all posted forms that are on the Member Service Queue, loop through logged in users and assign each user to a application.
+	Once complete, set the last User Assigned to the last person assigned.
+	Once complete, the next posted form will be assigned to the next user after Last user Assigned.
