@@ -107,13 +107,13 @@ namespace RoundRobin
         {
             IOrganizationService service = context.GetExtension<IOrganizationServiceFactory>().CreateOrganizationService(null);
             EntityReference teamRef = Team.Get(context);
-            Entity teamRecord = service.Retrieve(teamRef.LogicalName, teamRef.Id, new ColumnSet("ramcosub_opendatetime","ramcosub_closedatetime", "ramcosub_countofloginusers", "ramcosub_totalteammembers", "ramcosub_roundrobinthreshold"));
+            Entity teamRecord = service.Retrieve(teamRef.LogicalName, teamRef.Id, new ColumnSet("ramcosub_opendatetime", "ramcosub_closedatetime", "ramcosub_countofloginusers", "ramcosub_totalteammembers", "ramcosub_roundrobinthreshold"));
             DateTime closedDateTime = teamRecord.GetAttributeValue<DateTime>("ramcosub_closedatetime");
             DateTime openDateTime = teamRecord.GetAttributeValue<DateTime>("ramcosub_opendatetime");
             DateTime getRoundRobinThreshold = teamRecord.GetAttributeValue<DateTime>("ramcosub_roundrobinthreshold");
             int countOfUsersLogin = teamRecord.GetAttributeValue<int>("ramcosub_countofloginusers");
             int openTotalMembersOfTeam = teamRecord.GetAttributeValue<int>("ramcosub_totalteammembers");
-            
+
 
             ClosedDateTime.Set(context, closedDateTime);
             OpenDateTime.Set(context, openDateTime);
@@ -133,10 +133,6 @@ namespace RoundRobin
         [ReferenceTarget("savedquery")]
         public InArgument<EntityReference> SystemView { get; set; }
 
-        [Input("Case")]
-        [ReferenceTarget("new_case")]
-        public InArgument<EntityReference> CaseRecord { get; set; }
-
         protected override void Execute(CodeActivityContext context)
         {
             try
@@ -146,16 +142,17 @@ namespace RoundRobin
                 // get Team Record, System View, and Created Case Record
                 EntityReference teamRef = TeamRecord.Get(context);
                 EntityReference savedView = SystemView.Get(context);
-                EntityReference caseRecord = CaseRecord.Get(context);
 
                 EntityReference teamQueue = GetTeamQueue(teamRef, service);
                 EntityCollection queueItems = GetQueueItems(savedView, service);
                 EntityCollection teamMembers = GetTeamMembers(teamRef, service);
-                Entity teamRecord = GetLastUserName(teamRef, service);
+                Entity lastUserAssigned = GetLastUserName(teamRef, service);
                 // retrieves EntityReference object
-                EntityReference lastAssignedUser = teamRecord.GetAttributeValue<EntityReference>("ramcosub_lastuserassigned");
-                AssignQueueItemToUser(queueItems, teamMembers, lastAssignedUser, service);
-                CreateCaseQueueItem(caseRecord, teamQueue, lastAssignedUser, service);
+                EntityReference lastUserReference = lastUserAssigned.GetAttributeValue<EntityReference>("ramcosub_lastuserassigned");
+                Entity teamdId = new Entity("team");
+                teamdId["teamid"] = teamRef.Id;
+                AssignQueueItemToUser(queueItems, teamMembers, lastUserReference, teamdId, service);
+                Console.ReadLine();
             }
 
             catch (Exception ex)
@@ -197,8 +194,8 @@ namespace RoundRobin
 
         private static Entity GetLastUserName(EntityReference teamRef, IOrganizationService service)
         {
-            Entity teamRecord = service.Retrieve(teamRef.LogicalName, teamRef.Id, new ColumnSet("ramcosub_lastuserassigned"));
-            return teamRecord;
+            Entity lastUserAssigned = service.Retrieve(teamRef.LogicalName, teamRef.Id, new ColumnSet("ramcosub_lastuserassigned"));
+            return lastUserAssigned;
         }
 
         private static EntityReference GetTeamQueue(EntityReference teamRef, IOrganizationService service)
@@ -207,23 +204,32 @@ namespace RoundRobin
             EntityReference teamQueue = team.GetAttributeValue<EntityReference>("queueid");
             return teamQueue;
         }
-        private static void AssignQueueItemToUser(EntityCollection queueItems, EntityCollection teamMembers, EntityReference lastAssignedUser, IOrganizationService service)
+        private static void AssignQueueItemToUser(EntityCollection queueItems, EntityCollection teamMembers, EntityReference lastAssignedUser, Entity teamId, IOrganizationService service)
         {
             int teamMemberIndex = 0;
             if (lastAssignedUser == null)
             {
-
-
-                foreach (Entity queueItem in queueItems.Entities)
+                for (int i = 0; i < queueItems.Entities.Count; i++)
                 {
                     if (teamMemberIndex >= teamMembers.Entities.Count)
                         teamMemberIndex = 0;
-                    EntityReference userRecordRef = new EntityReference("systemuser", teamMembers.Entities[teamMemberIndex].Id);
+                    EntityReference userRecordRef = new EntityReference("systemuser", teamMembers.Entities[teamMemberIndex].GetAttributeValue<EntityReference>("ramcosub_user").Id);
+
+                    Entity queueItem = queueItems.Entities[i];
                     queueItem["workerid"] = userRecordRef;
                     service.Update(queueItem);
-
-                    teamMemberIndex++;
+                    if (i == queueItems.Entities.Count - 1)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        teamMemberIndex++;
+                    }
                 }
+                EntityReference assignLastUser = new EntityReference("systemuser", teamMembers.Entities[teamMemberIndex].GetAttributeValue<EntityReference>("ramcosub_user").Id);
+                teamId["ramcosub_lastuserassigned"] = assignLastUser;
+                service.Update(teamId);
             }
             else
             {
@@ -231,22 +237,35 @@ namespace RoundRobin
                 {
                     if (teamMembers.Entities[i].GetAttributeValue<EntityReference>("ramcosub_user").Name == lastAssignedUser.Name)
                     {
-                        teamMemberIndex = i;
+                        teamMemberIndex = i + 1;
+                        break;
                     }
                 }
-                foreach (Entity queueItem in queueItems.Entities)
+
+                for (int i = 0; i < queueItems.Entities.Count; i++)
                 {
                     if (teamMemberIndex >= teamMembers.Entities.Count)
                         teamMemberIndex = 0;
-
                     EntityReference userRecordRef = new EntityReference("systemuser", teamMembers.Entities[teamMemberIndex].GetAttributeValue<EntityReference>("ramcosub_user").Id);
+
+                    Entity queueItem = queueItems.Entities[i];
                     queueItem["workerid"] = userRecordRef;
                     service.Update(queueItem);
-
-                    teamMemberIndex++;
+                    if (i == queueItems.Entities.Count - 1)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        teamMemberIndex++;
+                    }
                 }
+                // this is where I'll need to assign the last user that was assigned to this list. 
+                EntityReference assignLastUser = new EntityReference("systemuser", teamMembers.Entities[teamMemberIndex].GetAttributeValue<EntityReference>("ramcosub_user").Id);
+                teamId["ramcosub_lastuserassigned"] = assignLastUser;
+                service.Update(teamId);
             }
         }
-    }
 
+    }
 }
