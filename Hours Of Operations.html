@@ -65,7 +65,11 @@
             {
                         // Get the current date
                 var currentDate = window.parent.Xrm.Page.getAttribute("ramcosub_opendatetime").getValue();
-        
+                if (currentDate === null)
+                {
+                    currentDate = new Date();
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
                 // Set the time from the time string to the current date
                 currentDate.setHours(0); // Reset hours to 0
                 currentDate.setMinutes(0); // Reset minutes to 0
