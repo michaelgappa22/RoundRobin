@@ -65,8 +65,8 @@
             window.parent.Xrm.Page.getAttribute(
                 "ramcosub_roundrobinthresholdstring"
             ).setValue(datetimeThreshold);
-            window.parent.Xrm.Page.data.save();
             setDateTimefield();
+            window.parent.Xrm.Page.data.save();
             alert("Saved!");
         }
         function setDateTimefield()
