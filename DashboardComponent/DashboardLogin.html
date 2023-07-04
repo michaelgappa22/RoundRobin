@@ -15,29 +15,31 @@ function setRoundRobinLogin()
     var loginStatus = getLoginStatusForUser();
     var userId = window.parent.Xrm.Page.context.getUserId();
     userId = userId.slice(1,userId.length -1);
-    if (loginStatus === false)
+    if (loginStatus.d.results.length === 0)
     {
         var listOfTeams = getListOfTeams(userId);
         createActiveLoginRecordWithinBusinesHours(listOfTeams, userId);
-        updateUserRamcosub_loggedin(userId);
     }
 }
 
 
 function getLoginStatusForUser()
 {
+    var dateTimeNow = new Date();
+    let currentDay= String(dateTimeNow.getDate()).padStart(2, "0");
+    let currentMonth = String(dateTimeNow.getMonth()+1).padStart(2,"0");
+    let currentYear = dateTimeNow.getFullYear();
+    let currentDate = `${currentYear}-${currentMonth}-${currentDay}`;
     var req = new XMLHttpRequest();
     var userId = window.parent.Xrm.Page.context.getUserId();
-    req.open("GET", window.parent.Xrm.Page.context.getClientUrl() + "/api/data/v8.2/systemusers(" + userId.slice(1,userId.length -1) + ")?$select=ramcosub_loggedin", false);
-    req.setRequestHeader("OData-MaxVersion", "4.0");
-    req.setRequestHeader("OData-Version", "4.0");
+    req.open("GET", window.parent.Xrm.Page.context.getClientUrl() + "/XRMServices/2011/OrganizationData.svc/ramcosub_userloginSet?$select=statecode&$filter=CreatedOn ge datetime'" + currentDate + "T04:00:00.000Z' and statecode/Value eq 0", false);
     req.setRequestHeader("Accept", "application/json");
     req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-    req.setRequestHeader("Prefer", "odata.include-annotations=\"*\"");
+    req.setRequestHeader('Cache-Control', 'no-cache');
     req.send();
     if (req.readyState === 4 && req.status === 200) {
         var result = JSON.parse(req.response);
-        return result["ramcosub_loggedin"];
+        return result;
     }
     else {
         window.parent.Xrm.Utility.alertDialog(req.statusText);
@@ -62,19 +64,7 @@ function createLoginRecord(userId, teamId)
     req.open("POST", encodeURI(window.parent.Xrm.Page.context.getClientUrl() + "/XRMServices/2011/OrganizationData.svc/ramcosub_userloginSet"), true);
     req.setRequestHeader("Accept", "application/json");
     req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-    req.send(JSON.stringify(entity));
-}
-
-function updateUserRamcosub_loggedin(userId)
-{
-    var entity = {};
-    entity.ramcosub_LoggedIn = true;
-
-    var req = new XMLHttpRequest();
-    req.open("POST", window.parent.Xrm.Page.context.getClientUrl() + "/XRMServices/2011/OrganizationData.svc/SystemUserSet(guid'(" + userId + ")')", false);
-    req.setRequestHeader("Accept", "application/json");
-    req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-    req.setRequestHeader("X-HTTP-Method", "MERGE");
+    req.setRequestHeader('Cache-Control', 'no-cache');
     req.send(JSON.stringify(entity));
 }
 
@@ -148,6 +138,7 @@ function getListOfTeams(userId) {
     req.setRequestHeader("Accept", "application/json");
     req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
     req.setRequestHeader("Prefer", "odata.include-annotations=\"*\"");
+    req.setRequestHeader('Cache-Control', 'no-cache');
     req.send();
     if (req.readyState === 4 && req.status === 200) {
         var results = JSON.parse(req.response);
