@@ -1,8 +1,6 @@
-<html>
-
-<head>
+<html><head>
     <!-- Include Bootstrap CDN -->
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
@@ -10,43 +8,37 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.9.0/moment.min.js"></script>
 
     <!-- Include Bootstrap DateTimePicker CDN -->
-    <link
-        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css"
-        rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
 
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
-    <meta />
-    <meta />
-    <meta />
-    <meta />
-    <meta />
-    <meta />
-    <meta />
-    <meta />
-    <meta />
-    <meta />
-    <meta />
-</head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+<meta><meta><meta><meta><meta></head>
 
-<body style="overflow-wrap: break-word">
+<body style="overflow-wrap: break-word" onfocusout="parent.setEmailRange();">
     <div>
         <div style="position: relative">
             <label>Open</label>
-            <input class="form-control" type="text" id="datetimeOpen" style="max-width: 200px; margin-bottom: 30px" />
+            <input class="form-control" type="text" id="datetimeOpen" style="max-width: 200px; margin-bottom: 30px">
         </div>
         <div style="position: relative">
             <label>Close</label>
-            <input class="form-control" type="text" id="datetimeClose" style="max-width: 200px; margin-bottom: 30px" />
+            <input class="form-control" type="text" id="datetimeClose" style="max-width: 200px; margin-bottom: 30px">
         </div>
-        <button type="button" class="btn btn-primary" onclick="updateHours()">
-            Submit
-        </button>
         <div style="position: relative; margin-top: 30px">
             <label>Round Robin Threshold</label>
-            <input class="form-control" type="text" id="threshold" style="max-width: 200px; margin-bottom: 30px" />
+            <input class="form-control" type="text" id="threshold" style="max-width: 200px; margin-bottom: 30px">
         </div>
-        <button type="button" class="btn btn-primary" onclick="updateThreshold()">
+        <button type="button" class="btn btn-primary" onclick="updateHours()">
             Submit
         </button>
     </div>
@@ -57,46 +49,61 @@
         function updateHours() {
             let datetimeOpen = document.getElementById("datetimeOpen").value;
             let datetimeClose = document.getElementById("datetimeClose").value;
+            let datetimeThreshold = document.getElementById("threshold").value;
             window.parent.Xrm.Page.getAttribute(
                 "ramcosub_hoursofoperationopen"
             ).setValue(datetimeOpen);
             window.parent.Xrm.Page.getAttribute(
                 "ramcosub_hoursofoperationclosed"
             ).setValue(datetimeClose);
-            window.parent.Xrm.Page.data.save();
-            // set the Queue Open and Closed Date so Round Robin can be scheduled via Queue.
-            var id = window.parent.Xrm.Page.getAttribute("queueid").getValue()[0]["id"];
-            id = id.slice(1, id.length - 1);
-            var entity = {};
-            entity.ramcosub_opentimeanddate = datetimeOpen;
-            entity.ramcosub_closetimeanddate = datetimeClosed;
-
-            var req = new XMLHttpRequest();
-            req.open("PATCH",window.parent.Xrm.Page.context.getClientUrl() + "/api/data/v8.2/queues(" + id + ")", true);
-            req.setRequestHeader("OData-MaxVersion", "4.0");
-            req.setRequestHeader("OData-Version", "4.0");
-            req.setRequestHeader("Accept", "application/json");
-            req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-            req.onreadystatechange = function () {
-                if (this.readyState === 4) {
-                    req.onreadystatechange = null;
-                    if (this.status === 204) {
-                        alert("Saved!");
-                    } else {
-                        window.parent.Xrm.Utility.alertDialog(this.statusText);
-                    }
-                }
-            };
-            req.send(JSON.stringify(entity));
-        }
-        function updateThreshold() {
-            let datetimeThreshold = document.getElementById("threshold").value;
             window.parent.Xrm.Page.getAttribute(
                 "ramcosub_roundrobinthresholdstring"
             ).setValue(datetimeThreshold);
+            setDateTimefield();
+        }
+        function setDateTimefield()
+            {
+                        // Get the current date
+                var currentDate = window.parent.Xrm.Page.getAttribute("ramcosub_opendatetime").getValue();
+                if (currentDate === null)
+                {
+                    currentDate = new Date();
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                // Set the time from the time string to the current date
+                currentDate.setHours(0); // Reset hours to 0
+                currentDate.setMinutes(0); // Reset minutes to 0
+                currentDate.setSeconds(0); // Reset seconds to 0
+                currentDate.setMilliseconds(0); // Reset milliseconds to 0
+                
+                // Create a new Date object by adding the time to the current date
+                var datetimeOpen = new Date(
+                    currentDate.toDateString() +
+                    " " +
+                    document.getElementById("datetimeOpen").value
+                );
+                var datetimeClosed = new Date(
+                    currentDate.toDateString() +
+                    " " +
+                    document.getElementById("datetimeClose").value
+                );
+                var datetimeThreshold = new Date(
+                    currentDate.toDateString() +
+                    " " +
+                    document.getElementById("threshold").value
+                );
+                window.parent.Xrm.Page.getAttribute("ramcosub_opendatetime").setValue(
+                    datetimeOpen
+                );
+                window.parent.Xrm.Page.getAttribute("ramcosub_closedatetime").setValue(
+                    datetimeClosed
+                );
+                window.parent.Xrm.Page.getAttribute(
+                    "ramcosub_roundrobinthreshold"
+                ).setValue(datetimeThreshold);
             window.parent.Xrm.Page.data.save();
             alert("Saved!");
-        }
+            }
         $("#datetimeOpen").datetimepicker({
             format: "hh:mm A",
         });
@@ -118,42 +125,7 @@
             window.parent.Xrm.Page.getAttribute(
                 "ramcosub_roundrobinthresholdstring"
             ).getValue();
-
-        // Get the current date
-        var currentDate = new Date();
-
-        // Set the time from the time string to the current date
-        currentDate.setHours(0); // Reset hours to 0
-        currentDate.setMinutes(0); // Reset minutes to 0
-        currentDate.setSeconds(0); // Reset seconds to 0
-        currentDate.setMilliseconds(0); // Reset milliseconds to 0
-
-        // Create a new Date object by adding the time to the current date
-        var datetimeOpen = new Date(
-            currentDate.toDateString() +
-            " " +
-            document.getElementById("datetimeOpen").value
-        );
-        var datetimeClosed = new Date(
-            currentDate.toDateString() +
-            " " +
-            document.getElementById("datetimeClose").value
-        );
-        var datetimeThreshold = new Date(
-            currentDate.toDateString() +
-            " " +
-            document.getElementById("threshold").value
-        );
-        window.parent.Xrm.Page.getAttribute("ramcosub_opendatetime").setValue(
-            datetimeOpen
-        );
-        window.parent.Xrm.Page.getAttribute("ramcosub_closedatetime").setValue(
-            datetimeClosed
-        );
-        window.parent.Xrm.Page.getAttribute(
-            "ramcosub_roundrobinthreshold"
-        ).setValue(datetimeThreshold);
     </script>
-</body>
 
-</html>
+
+</body></html>
