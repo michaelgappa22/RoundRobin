@@ -81,7 +81,45 @@ namespace RoundRobin
             service.Update(teamRecord);
         }
     }
+    public class AddOneDayToHoursOfOperation : CodeActivity
+    {
+        [Input("Team")]
+        [ReferenceTarget("team")]
+        public InArgument<EntityReference> Team { get; set; }
 
+        protected override void Execute(CodeActivityContext context)
+        {
+            IOrganizationService service = context.GetExtension<IOrganizationServiceFactory>().CreateOrganizationService(null);
+            Entity teamId = service.Retrieve("team", new Guid("f06800bb-4818-ee11-9dff-00155d234437"), new ColumnSet("ramcosub_opendatetime", "ramcosub_closedatetime", "ramcosub_roundrobinthreshold"));
+            DateTime newOpenDate = teamId.GetAttributeValue<DateTime>("ramcosub_opendatetime");
+            DateTime newCloseDate = teamId.GetAttributeValue<DateTime>("ramcosub_closedatetime");
+            DateTime newRoundRobinThreshold = teamId.GetAttributeValue<DateTime>("ramcosub_roundrobinthreshold");
+            newOpenDate = newOpenDate.AddDays(1);
+            newCloseDate = newCloseDate.AddDays(1);
+            newRoundRobinThreshold = newRoundRobinThreshold.AddDays(1);
+            teamId["ramcosub_opendatetime"] = newOpenDate;
+            teamId["ramcosub_closedatetime"] = newCloseDate;
+            teamId["ramcosub_roundrobinthreshold"] = newRoundRobinThreshold;
+            service.Update(teamId);
+        }
+    }
+    public class SetCountOfTeamMembersToZero : CodeActivity
+    {
+        [Input("Team")]
+        [ReferenceTarget("team")]
+        public InArgument<EntityReference> Team { get; set; }
+
+        protected override void Execute(CodeActivityContext context)
+        {
+            IOrganizationService service = context.GetExtension<IOrganizationServiceFactory>().CreateOrganizationService(null);
+            EntityReference teamRef = Team.Get(context);
+
+            Entity teamRecord = service.Retrieve(teamRef.LogicalName, teamRef.Id, new ColumnSet("ramcosub_countofloginusers"));
+            teamRecord["ramcosub_countofloginusers"] = 0;
+
+            service.Update(teamRecord);
+        }
+    }
     public class GetTeamHoursOfOperations : CodeActivity
     {
         [Input("Team")]
@@ -122,7 +160,6 @@ namespace RoundRobin
             RoundRobinThreshold.Set(context, getRoundRobinThreshold);
         }
     }
-
     public class RoundRobinAssignment : CodeActivity
     {
         [Input("Team")]
