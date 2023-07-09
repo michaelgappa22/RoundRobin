@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
+<html><head>
     <title>Dashboard Web Resource</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-</head>
-<body>
+<meta><meta></head>
+<body onfocusout="parent.setEmailRange();" style="overflow-wrap: break-word;">
     <script>
 //run a function that gets the User GUID and checks if the ramcosub_loggedin is false
 window.onload = function() {
@@ -91,19 +89,13 @@ function createActiveLoginRecordWithinBusinesHours(listOfTeams, userId)
     {
         teamId = listOfTeams[i][2];
         execution = new Date().getTime();
-        openTimeParse = parseTimeStringToTime(listOfTeams[i][0]);
-        openTime = new Date();
-        openTime.setMinutes(openTimeParse.minutes);
-        openTime.setHours(openTimeParse.hours);
-        closeTimeParse = parseTimeStringToTime(listOfTeams[i][1]);
-        closeTime = new Date();
-        closeTime.setMinutes(closeTimeParse.minutes);
-        closeTime.setHours(closeTimeParse.hours);
+        var openHours = new Date(listOfTeams[0][0]).getTime(); 
+        var closeHours = new Date(listOfTeams[0][1]).getTime();
         console.log("is execution > openTime?");
-        console.log(execution > openTime.getTime());
+        console.log(execution > openHours);
         console.log("is execution > closeTime?");
-        console.log(execution < closeTime.getTime());
-        if (execution > openTime.getTime() && execution < closeTime.getTime())
+        console.log(execution < closeHours);
+        if (execution > openHours && execution < closeHours)
         {
             // If the event is within the hours, create a User Login record and set the Lookup field to the Team record.
             createLoginRecord(userId, teamId);
@@ -111,28 +103,11 @@ function createActiveLoginRecordWithinBusinesHours(listOfTeams, userId)
     }
 }
 
-function parseTimeStringToTime(timeString) {
-    var [time, period] = timeString.split(' ');
-    var [hours, minutes] = time.split(':').map(Number);
-  
-    if (period.toLowerCase() === 'pm' && hours !== 12) {
-      hours += 12;
-    } else if (period.toLowerCase() === 'am' && hours === 12) {
-      hours = 0;
-    }
-
-    var time = {
-        hours: hours,
-        minutes: minutes
-    };
-    return time;
-}
-
 function getListOfTeams(userId) {
     var listOfTeams = [];
 
     var req = new XMLHttpRequest();
-    req.open("GET", window.parent.Xrm.Page.context.getClientUrl() + "/api/data/v8.2/systemusers(" + userId + ")?$expand=teammembership_association($select=teamid,name,ramcosub_hoursofoperationclosed,ramcosub_hoursofoperationopen)", false);
+    req.open("GET", window.parent.Xrm.Page.context.getClientUrl() + "/api/data/v8.2/systemusers(" + userId + ")?$expand=teammembership_association($select=teamid,name,ramcosub_closedatetime,ramcosub_opendatetime)", false);
     req.setRequestHeader("OData-MaxVersion", "4.0");
     req.setRequestHeader("OData-Version", "4.0");
     req.setRequestHeader("Accept", "application/json");
@@ -143,8 +118,8 @@ function getListOfTeams(userId) {
     if (req.readyState === 4 && req.status === 200) {
         var results = JSON.parse(req.response);
         for (var i = 0; i < results["teammembership_association"].length; i++) {
-            var openTime = results["teammembership_association"][i]["ramcosub_hoursofoperationopen"];
-            var closeTime = results["teammembership_association"][i]["ramcosub_hoursofoperationclosed"];
+            var openTime = results["teammembership_association"][i]["ramcosub_opendatetime"];
+            var closeTime = results["teammembership_association"][i]["ramcosub_closedatetime"];
             var teamId = results["teammembership_association"][i]["teamid"];
             if (openTime !== null && closeTime !== null)
             {
@@ -162,5 +137,5 @@ function getListOfTeams(userId) {
     return listOfTeams;
 }
     </script>
-</body>
-</html>
+
+</body></html>
