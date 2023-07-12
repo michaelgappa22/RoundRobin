@@ -1,0 +1,1 @@
+This plugin includes Kaskela's Workflow Elements. You will need to download this version before installing solution. https://github.com/akaskela/WorkflowElements/releases/download/2.2.0/WorkflowElements_2_2_0.zip
