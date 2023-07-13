@@ -1,8 +1,8 @@
 <html><head>
     <title>Dashboard Web Resource</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-<meta><meta></head>
-<body onfocusout="parent.setEmailRange();" style="overflow-wrap: break-word;">
+</head>
+<body>
     <script>
 //run a function that gets the User GUID and checks if the ramcosub_loggedin is false
 window.onload = function() {
@@ -13,7 +13,17 @@ function setRoundRobinLogin()
     var loginStatus = getLoginStatusForUser();
     var userId = window.parent.Xrm.Page.context.getUserId();
     userId = userId.slice(1,userId.length -1);
-    if (loginStatus.d.results.length === 0)
+    var found = false;
+    for (var i=0; i < loginStatus.d.results.length; i++)
+    {
+        if(loginStatus.d.results[i]["ramcosub_User"].Id.toUpperCase() === userId)
+        {
+            found = true;
+            break;
+        }
+        continue;
+    }
+    if (found == false)
     {
         var listOfTeams = getListOfTeams(userId);
         createActiveLoginRecordWithinBusinesHours(listOfTeams, userId);
@@ -30,7 +40,7 @@ function getLoginStatusForUser()
     let currentDate = `${currentYear}-${currentMonth}-${currentDay}`;
     var req = new XMLHttpRequest();
     var userId = window.parent.Xrm.Page.context.getUserId();
-    req.open("GET", window.parent.Xrm.Page.context.getClientUrl() + "/XRMServices/2011/OrganizationData.svc/ramcosub_userloginSet?$select=statecode&$filter=CreatedOn ge datetime'" + currentDate + "T04:00:00.000Z' and statecode/Value eq 0", false);
+    req.open("GET", window.parent.Xrm.Page.context.getClientUrl() + "/XRMServices/2011/OrganizationData.svc/ramcosub_userloginSet?$select=statecode,ramcosub_User&$filter=CreatedOn ge datetime'" + currentDate + "T04:00:00.000Z' and statecode/Value eq 0", false);
     req.setRequestHeader("Accept", "application/json");
     req.setRequestHeader("Content-Type", "application/json; charset=utf-8");
     req.setRequestHeader('Cache-Control', 'no-cache');
@@ -103,6 +113,23 @@ function createActiveLoginRecordWithinBusinesHours(listOfTeams, userId)
     }
 }
 
+function parseTimeStringToTime(timeString) {
+    var [time, period] = timeString.split(' ');
+    var [hours, minutes] = time.split(':').map(Number);
+  
+    if (period.toLowerCase() === 'pm' && hours !== 12) {
+      hours += 12;
+    } else if (period.toLowerCase() === 'am' && hours === 12) {
+      hours = 0;
+    }
+
+    var time = {
+        hours: hours,
+        minutes: minutes
+    };
+    return time;
+}
+
 function getListOfTeams(userId) {
     var listOfTeams = [];
 
@@ -137,5 +164,5 @@ function getListOfTeams(userId) {
     return listOfTeams;
 }
     </script>
-
-</body></html>
+</body>
+</html>

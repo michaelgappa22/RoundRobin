@@ -10,6 +10,7 @@ namespace RoundRobin
     public class AddTeamMemberFromCount : CodeActivity
     {
         [Input("Team")]
+        [RequiredArgument]
         [ReferenceTarget("team")]
         public InArgument<EntityReference> team { get; set; }
         protected override void Execute(CodeActivityContext context)
@@ -36,6 +37,7 @@ namespace RoundRobin
     public class RemoveTeamMemberFromCount : CodeActivity
     {
         [Input("Team")]
+        [RequiredArgument]
         [ReferenceTarget("team")]
         public InArgument<EntityReference> team { get; set; }
         protected override void Execute(CodeActivityContext context)
@@ -62,6 +64,7 @@ namespace RoundRobin
     public class SetCountOfTeamMembers : CodeActivity
     {
         [Input("Team")]
+        [RequiredArgument]
         [ReferenceTarget("team")]
         public InArgument<EntityReference> Team { get; set; }
 
@@ -84,13 +87,15 @@ namespace RoundRobin
     public class AddOneDayToHoursOfOperation : CodeActivity
     {
         [Input("Team")]
+        [RequiredArgument]
         [ReferenceTarget("team")]
         public InArgument<EntityReference> Team { get; set; }
 
         protected override void Execute(CodeActivityContext context)
         {
             IOrganizationService service = context.GetExtension<IOrganizationServiceFactory>().CreateOrganizationService(null);
-            Entity teamId = service.Retrieve("team", new Guid("f06800bb-4818-ee11-9dff-00155d234437"), new ColumnSet("ramcosub_opendatetime", "ramcosub_closedatetime", "ramcosub_roundrobinthreshold"));
+            EntityReference teamRef = Team.Get(context);
+            Entity teamId = service.Retrieve("team", teamRef.Id, new ColumnSet("ramcosub_opendatetime", "ramcosub_closedatetime", "ramcosub_roundrobinthreshold"));
             DateTime newOpenDate = teamId.GetAttributeValue<DateTime>("ramcosub_opendatetime");
             DateTime newCloseDate = teamId.GetAttributeValue<DateTime>("ramcosub_closedatetime");
             DateTime newRoundRobinThreshold = teamId.GetAttributeValue<DateTime>("ramcosub_roundrobinthreshold");
@@ -106,6 +111,7 @@ namespace RoundRobin
     public class SetCountOfTeamMembersToZero : CodeActivity
     {
         [Input("Team")]
+        [RequiredArgument]
         [ReferenceTarget("team")]
         public InArgument<EntityReference> Team { get; set; }
 
@@ -123,6 +129,7 @@ namespace RoundRobin
     public class GetTeamHoursOfOperations : CodeActivity
     {
         [Input("Team")]
+        [RequiredArgument]
         [ReferenceTarget("team")]
         public InArgument<EntityReference> Team { get; set; }
 
@@ -163,10 +170,12 @@ namespace RoundRobin
     public class RoundRobinAssignment : CodeActivity
     {
         [Input("Team")]
+        [RequiredArgument]
         [ReferenceTarget("team")]
         public InArgument<EntityReference> TeamRecord { get; set; }
 
         [Input("System View")]
+        [RequiredArgument]
         [ReferenceTarget("savedquery")]
         public InArgument<EntityReference> SystemView { get; set; }
 
@@ -188,8 +197,10 @@ namespace RoundRobin
                 EntityReference lastUserReference = lastUserAssigned.GetAttributeValue<EntityReference>("ramcosub_lastuserassigned");
                 Entity teamdId = new Entity("team");
                 teamdId["teamid"] = teamRef.Id;
-                AssignQueueItemToUser(queueItems, teamMembers, lastUserReference, teamdId, service);
-                Console.ReadLine();
+                if (queueItems.Entities.Count > 0)
+                {
+                    AssignQueueItemToUser(queueItems, teamMembers, lastUserReference, teamdId, service);
+                }
             }
 
             catch (Exception ex)
