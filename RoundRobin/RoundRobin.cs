@@ -197,9 +197,12 @@ namespace RoundRobin
                 EntityReference lastUserReference = lastUserAssigned.GetAttributeValue<EntityReference>("ramcosub_lastuserassigned");
                 Entity teamdId = new Entity("team");
                 teamdId["teamid"] = teamRef.Id;
-                if (queueItems.Entities.Count > 0)
+                if (teamMembers.Entities.Count > 0)
                 {
-                    AssignQueueItemToUser(queueItems, teamMembers, lastUserReference, teamdId, service);
+                    if (queueItems.Entities.Count > 0)
+                    {
+                        AssignQueueItemToUser(queueItems, teamMembers, lastUserReference, teamdId, service);
+                    }
                 }
             }
 
